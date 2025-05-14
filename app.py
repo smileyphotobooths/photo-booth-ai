@@ -70,11 +70,11 @@ def analyze():
                 "☀️ = slightly overexposed\n"
                 "⚠️ = far off\n\n"
                 "If changes are needed, suggest **specific values**. "
-                "Keep Tv at 1/125 unless the photo is extremely off. Prioritize adjusting aperture (Av) first, then ISO. "
+                "Keep Tv at 1/125 unless the photo is extremely off. Prioritize adjusting aperture (Av) first, then ISO only if absolutely needed. "
                 "Do not recommend changes just to make a suggestion. If this test shot already matches the references — stop and confirm it.\n\n"
                 "If skin tones already approach RGB 240+, do not suggest brightening. "
                 "Only recommend changes when they would clearly move the image closer to Jeremy’s approved examples. "
-                "Keep response very short — max 2 sentences."
+                "Keep response very short — 1 sentence."
             )
         })
 
