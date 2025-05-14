@@ -10,11 +10,11 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ✅ Your 5 reference images from SmugMug
 reference_images = [
-    "https://gallery.smileyphotobooths.com/19225630/i-XXfLj6C/A",
-    "https://gallery.smileyphotobooths.com/19371714/i-CSb27qT/A",
-    "https://gallery.smileyphotobooths.com/19380336/i-v83k7ks/A",
-    "https://gallery.smileyphotobooths.com/19535734/i-dmxckL4/A",
-    "https://gallery.smileyphotobooths.com/19599994/i-3sPSS2K/A"
+    "https://photos.smugmug.com/19225630/i-XXfLj6C/0/NNsqJBNdGXcbGq3TbcR96tctRT6m6JqDgmX4Rt9f4/X3/unknown-X3.jpg",
+    "https://photos.smugmug.com/19371714/i-CSb27qT/0/KLDF5vDrXCZcBMNVGgptfc94QK2kNG5KqQBX8qhD3/X3/unknown-X3.jpg",
+    "https://photos.smugmug.com/19380336/i-v83k7ks/0/NZN4JPxCgvtdxqGWNBh36F8J2RWmvZhL3dzkz2JbT/X3/unknown-X3.jpg",
+    "https://photos.smugmug.com/19535734/i-dmxckL4/0/NWRQJZtrnWkXfVQXrBVwK3vs26Rr6z7csHbTJf3hZ/X3/unknown-X3.jpg",
+    "https://photos.smugmug.com/19599994/i-3sPSS2K/0/Kf6Zfbf5rrzHKCjpbKtd4XcPNqKZ8hS3r28p2BRhb/X3/unknown-X3.jpg"
 ]
 
 def base64_image(path):
