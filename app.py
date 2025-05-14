@@ -22,12 +22,11 @@ def analyze():
         if not image_file or not metadata:
             return jsonify({"error": "Missing image or metadata"}), 400
 
-        # Save image temporarily
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
             file_path = tmp.name
             image_file.save(file_path)
 
-        # Prompt with emoji + memory + smart brightness preference
+        # Prompt with emoji rating and concise feedback
         if previous:
             prompt = f"""
 This is an event photo booth. Slightly brighter than standard exposure is preferred, but avoid blown-out highlights or harsh brightness. The image should look vibrant, clean, and flattering. Skin tones should remain natural-looking. Shutter speed is fixed at 1/125. Flash was used.
@@ -46,7 +45,7 @@ Start your response with one of these emojis:
 🌙 if slightly underexposed,  
 ⚠️ if the image is clearly over or underexposed.
 
-Give a short, clear recommendation (1–2 sentences max) to better match this preferred style. Only suggest a change if it would improve the image — and when unsure, lean slightly brighter to match the vibrant photo booth style. But do not keep increasing brightness once the look is achieved. Prioritize adjusting aperture (Av), then ISO. Only change shutter speed if absolutely necessary.
+Give a brief response (ideally 1 sentence). Keep it concise and to the point. Only suggest a change if it would improve the image — and when unsure, lean slightly brighter to match the vibrant photo booth style. But do not keep increasing brightness once the look is achieved. Prioritize adjusting aperture (Av), then ISO. Only change shutter speed if absolutely necessary.
 """
         else:
             prompt = f"""
@@ -61,7 +60,7 @@ Start your response with one of these emojis:
 🌙 if slightly underexposed,  
 ⚠️ if the image is clearly over or underexposed.
 
-Give a short and clear exposure assessment. Recommend changes only if they'd clearly improve the result — and when unsure, lean slightly brighter to match the vibrant photo booth style. Do not continue increasing brightness once the look is achieved. Prioritize aperture (Av), then ISO. Avoid changing shutter speed unless absolutely necessary. Keep the response under 2 sentences.
+Give a brief response (ideally 1 sentence). Keep it concise and to the point. Recommend changes only if they'd clearly improve the result — and when unsure, lean slightly brighter to match the vibrant photo booth style. Do not continue increasing brightness once the look is achieved. Prioritize aperture (Av), then ISO. Avoid changing shutter speed unless absolutely necessary.
 """
 
         response = openai.chat.completions.create(
@@ -80,7 +79,7 @@ Give a short and clear exposure assessment. Recommend changes only if they'd cle
                     ],
                 }
             ],
-            max_tokens=200
+            max_tokens=150
         )
 
         suggestion = response.choices[0].message.content.strip()
