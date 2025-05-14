@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# ✅ Your 5 reference images from SmugMug
+# ✅ Your 5 reference JPEGs (must be direct .jpg links)
 reference_images = [
     "https://photos.smugmug.com/19225630/i-XXfLj6C/0/NNsqJBNdGXcbGq3TbcR96tctRT6m6JqDgmX4Rt9f4/X3/unknown-X3.jpg",
     "https://photos.smugmug.com/19371714/i-CSb27qT/0/KLDF5vDrXCZcBMNVGgptfc94QK2kNG5KqQBX8qhD3/X3/unknown-X3.jpg",
@@ -36,42 +36,46 @@ def analyze():
             file_path = tmp.name
             image_file.save(file_path)
 
-        # Build the multi-part prompt for GPT-4 Vision
+        # Build the GPT-4 Vision prompt
         vision_prompt = []
 
-        # Reference section
+        # 1. Attach reference images
         for url in reference_images:
             vision_prompt.append({
                 "type": "image_url",
                 "image_url": {"url": url}
             })
 
+        # 2. Describe Jeremy's preferred style
         vision_prompt.append({
             "type": "text",
             "text": (
-                "These 5 images are approved examples of Jeremy's preferred photo booth style. "
-                "He likes bright, crisp, vibrant images with clean skin tones and flattering lighting — even if they are slightly overexposed. "
-                "Avoid underexposed or muted results. Use these reference images to evaluate the test photo's exposure."
+                "These are approved examples of Jeremy’s preferred photo booth style. "
+                "He likes vibrant, clean images with bright skin tones — slightly overexposed is okay. "
+                "Avoid underexposed or flat-looking shots. Use these as visual reference."
             )
         })
 
-        # Test photo section
+        # 3. Attach test image
         vision_prompt.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image(file_path)}"}
         })
 
+        # 4. Final instruction prompt
         vision_prompt.append({
             "type": "text",
             "text": (
-                f"Here are the current camera settings:\n{metadata}\n\n"
-                "Compare this test photo to the reference examples. Start your reply with one of these emojis:\n"
-                "✅ if the photo matches Jeremy’s preferred style,\n"
-                "🌙 if it's slightly underexposed,\n"
-                "☀️ if it's slightly overexposed,\n"
-                "⚠️ if it is clearly off.\n\n"
-                "Keep your response to 1 sentence. Suggest exposure adjustments only if it improves alignment with Jeremy’s style. "
-                "Favor brightness when unsure."
+                f"Camera settings: {metadata}\n\n"
+                "Compare this photo to the reference images.\n"
+                "Start your reply with one of these emojis:\n"
+                "✅ if the photo matches Jeremy’s preferred style\n"
+                "🌙 if it’s slightly underexposed\n"
+                "☀️ if it’s slightly overexposed\n"
+                "⚠️ if it is far off\n\n"
+                "If changes are needed, suggest specific new values. Prioritize adjusting **shutter speed (Tv)** first. "
+                "Only suggest ISO or aperture (Av) changes if the exposure is clearly off. "
+                "Be concise and practical — limit to 1 or 2 short sentences. Use plain language."
             )
         })
 
