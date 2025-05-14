@@ -8,6 +8,15 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# ✅ Your 5 reference images from SmugMug
+reference_images = [
+    "https://gallery.smileyphotobooths.com/19225630/i-XXfLj6C/A",
+    "https://gallery.smileyphotobooths.com/19371714/i-CSb27qT/A",
+    "https://gallery.smileyphotobooths.com/19380336/i-v83k7ks/A",
+    "https://gallery.smileyphotobooths.com/19535734/i-dmxckL4/A",
+    "https://gallery.smileyphotobooths.com/19599994/i-3sPSS2K/A"
+]
+
 def base64_image(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode("utf-8")
@@ -22,63 +31,53 @@ def analyze():
         if not image_file or not metadata:
             return jsonify({"error": "Missing image or metadata"}), 400
 
+        # Save uploaded test photo temporarily
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
             file_path = tmp.name
             image_file.save(file_path)
 
-        # Prompt with emoji rating and concise feedback
-        if previous:
-            prompt = f"""
-This is an event photo booth. Slightly brighter than standard exposure is preferred, but avoid blown-out highlights or harsh brightness. The image should look vibrant, clean, and flattering. Skin tones should remain natural-looking. Shutter speed is fixed at 1/125. Flash was used.
+        # Build the multi-part prompt for GPT-4 Vision
+        vision_prompt = []
 
-The previous photo had settings:
-{previous}
+        # Reference section
+        for url in reference_images:
+            vision_prompt.append({
+                "type": "image_url",
+                "image_url": {"url": url}
+            })
 
-You suggested those settings.
+        vision_prompt.append({
+            "type": "text",
+            "text": (
+                "These 5 images are approved examples of Jeremy's preferred photo booth style. "
+                "He likes bright, crisp, vibrant images with clean skin tones and flattering lighting — even if they are slightly overexposed. "
+                "Avoid underexposed or muted results. Use these reference images to evaluate the test photo's exposure."
+            )
+        })
 
-Here are the new camera settings and the resulting test photo:
-{metadata}
+        # Test photo section
+        vision_prompt.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{base64_image(file_path)}"}
+        })
 
-Start your response with one of these emojis:
-✅ if the image looks great and no changes are needed,  
-☀️ if it's slightly overexposed,  
-🌙 if slightly underexposed,  
-⚠️ if the image is clearly over or underexposed.
-
-Give a brief response (ideally 1 sentence). Keep it concise and to the point. Only suggest a change if it would improve the image — and when unsure, lean slightly brighter to match the vibrant photo booth style. But do not keep increasing brightness once the look is achieved. Prioritize adjusting aperture (Av), then ISO. Only change shutter speed if absolutely necessary.
-"""
-        else:
-            prompt = f"""
-This is an event photo booth. Slightly brighter than standard exposure is preferred, but avoid blown-out highlights or excessive brightness. Images should appear vibrant and flattering, especially for skin tones. The shutter speed is fixed at 1/125. Flash was used.
-
-Here are the current camera settings and test photo:
-{metadata}
-
-Start your response with one of these emojis:
-✅ if the image looks great and no changes are needed,  
-☀️ if it's slightly overexposed,  
-🌙 if slightly underexposed,  
-⚠️ if the image is clearly over or underexposed.
-
-Give a brief response (ideally 1 sentence). Keep it concise and to the point. Recommend changes only if they'd clearly improve the result — and when unsure, lean slightly brighter to match the vibrant photo booth style. Do not continue increasing brightness once the look is achieved. Prioritize aperture (Av), then ISO. Avoid changing shutter speed unless absolutely necessary.
-"""
+        vision_prompt.append({
+            "type": "text",
+            "text": (
+                f"Here are the current camera settings:\n{metadata}\n\n"
+                "Compare this test photo to the reference examples. Start your reply with one of these emojis:\n"
+                "✅ if the photo matches Jeremy’s preferred style,\n"
+                "🌙 if it's slightly underexposed,\n"
+                "☀️ if it's slightly overexposed,\n"
+                "⚠️ if it is clearly off.\n\n"
+                "Keep your response to 1 sentence. Suggest exposure adjustments only if it improves alignment with Jeremy’s style. "
+                "Favor brightness when unsure."
+            )
+        })
 
         response = openai.chat.completions.create(
             model="gpt-4-turbo",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image(file_path)}"
-                            },
-                        },
-                    ],
-                }
-            ],
+            messages=[{"role": "user", "content": vision_prompt}],
             max_tokens=150
         )
 
