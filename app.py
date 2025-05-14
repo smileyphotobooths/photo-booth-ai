@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# ✅ Your 5 reference JPEGs (must be direct .jpg links)
+# ✅ Your 5 direct .jpg reference images
 reference_images = [
     "https://photos.smugmug.com/19225630/i-XXfLj6C/0/NNsqJBNdGXcbGq3TbcR96tctRT6m6JqDgmX4Rt9f4/X3/unknown-X3.jpg",
     "https://photos.smugmug.com/19371714/i-CSb27qT/0/KLDF5vDrXCZcBMNVGgptfc94QK2kNG5KqQBX8qhD3/X3/unknown-X3.jpg",
@@ -36,49 +36,54 @@ def analyze():
             file_path = tmp.name
             image_file.save(file_path)
 
-        # Build the GPT-4 Vision prompt
+        # Build GPT-4 Vision prompt
         vision_prompt = []
 
-        # 1. Attach reference images
+        # 1. Attach visual references
         for url in reference_images:
             vision_prompt.append({
                 "type": "image_url",
                 "image_url": {"url": url}
             })
 
-        # 2. Describe Jeremy's preferred style
+        # 2. Explain Jeremy’s preferred style
         vision_prompt.append({
             "type": "text",
             "text": (
                 "These are approved examples of Jeremy’s preferred photo booth style. "
-                "He likes vibrant, clean images with bright skin tones — slightly overexposed is okay. "
-                "Avoid underexposed or flat-looking shots. Use these as visual reference."
+                "He likes crisp, vibrant, bright exposures that flatter skin tones — even slightly overexposed is acceptable. "
+                "Avoid images that appear dark, flat, or muddy. These reference photos are the baseline."
             )
         })
 
-        # 3. Attach test image
+        # 3. Attach the current test image
         vision_prompt.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image(file_path)}"}
         })
 
-        # 4. Final instruction prompt
+        # 4. Exposure evaluation instructions
         vision_prompt.append({
             "type": "text",
             "text": (
-                f"Camera settings: {metadata}\n\n"
-                "Compare this photo to the reference images.\n"
+                f"Here are the current camera settings:\n{metadata}\n\n"
+                "Evaluate the test image using the reference examples.\n"
                 "Start your reply with one of these emojis:\n"
                 "✅ if the photo matches Jeremy’s preferred style\n"
                 "🌙 if it’s slightly underexposed\n"
                 "☀️ if it’s slightly overexposed\n"
                 "⚠️ if it is far off\n\n"
-                "If changes are needed, suggest specific new values. Prioritize adjusting **shutter speed (Tv)** first. "
-                "Only suggest ISO or aperture (Av) changes if the exposure is clearly off. "
-                "Be concise and practical — limit to 1 or 2 short sentences. Use plain language."
+                "If adjustments are needed:\n"
+                "- ✅ Keep shutter speed at 1/125 unless absolutely necessary\n"
+                "- 🔧 Prioritize adjusting aperture (Av) first\n"
+                "- 🔧 Adjust ISO second if needed\n"
+                "- ❌ Only suggest changing shutter speed if no other option exists\n\n"
+                "Provide specific suggested values (e.g., 'Try f/5.6 or ISO 1600'). "
+                "Keep feedback short — no more than 2 concise sentences."
             )
         })
 
+        # Submit request to OpenAI
         response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[{"role": "user", "content": vision_prompt}],
