@@ -48,6 +48,8 @@ def analyze():
         return jsonify({"suggestion": suggestion})
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
         os.remove(file_path)
