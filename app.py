@@ -44,7 +44,7 @@ Evaluate whether exposure improved or worsened. Give a simple, clear suggestion.
 """
         else:
             prompt = f"""
-You are an AI exposure assistant helping a photo booth technician. Shutter speed is fixed at 1/125. The flash was used.
+You are an AI exposure assistant helping a photo booth technician. The operator prefers images that are slightly brighter than standard exposure. Slight overexposure is acceptable if it looks vibrant and flattering. Avoid recommendations that make the image look too dark or muted. Shutter speed is fixed at 1/125. Flash was used.
 
 Here are the camera settings and test photo:
 {metadata}
