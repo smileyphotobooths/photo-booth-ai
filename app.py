@@ -30,7 +30,7 @@ def analyze():
                     "content": [
                         {
                             "type": "text",
-                            "text": f"This is a photo taken in a photo booth setup. The camera settings are: {metadata}. Evaluate the exposure and lighting. Is it underexposed, overexposed, or just right? Suggest any changes to ISO, aperture (Av), or shutter speed (Tv) if needed. Flash was used.",
+                            "text": f"This is a photo taken in a photo booth setup. The camera settings are: {metadata}. You are an exposure assistant for photo booth technicians. Based on the image and the provided camera settings, give a **short and clear** assessment. Say if the image is overexposed, underexposed, or well exposed. Then suggest one or two simple adjustments if needed (ISO, aperture (Av), or shutter speed (Tv)). Respond in **1–2 plain sentences**, no technical jargon or camera theory. Be concise. Flash was used.",
                         },
                         {
                             "type": "image_url",
