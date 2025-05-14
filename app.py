@@ -30,26 +30,26 @@ def analyze():
         # Prepare prompt message
         if previous:
             prompt = f"""
-You are an AI exposure assistant helping a photo booth technician. Shutter speed is fixed at 1/125. The flash was used.
+This is an event photo booth. Bright, crisp, vibrant images are preferred even if it risks minor overexposure. The shutter speed is fixed at 1/125. Flash was used.
 
 The previous photo had settings:
 {previous}
 
 You suggested those settings.
 
-Here are the new settings and the resulting test photo:
+Here are the new camera settings and the resulting test photo:
 {metadata}
 
-Evaluate whether exposure improved or worsened. Give a simple, clear suggestion. Prioritize adjusting aperture (Av), then ISO. Only change shutter speed as a last resort. Keep response under 2 sentences.
+Evaluate whether exposure improved or worsened. Give a simple, clear suggestion (1–2 sentences max) to better match the preferred photo booth style. Prioritize adjusting aperture (Av), then ISO. Only change shutter speed as a last resort.
 """
         else:
             prompt = f"""
-You are an AI exposure assistant helping a photo booth technician. The operator prefers images that are slightly brighter than standard exposure. Slight overexposure is acceptable if it looks vibrant and flattering. Avoid recommendations that make the image look too dark or muted. Shutter speed is fixed at 1/125. Flash was used.
+This is an event photo booth. Bright, crisp, vibrant images are preferred even if it risks minor overexposure. The shutter speed is fixed at 1/125. Flash was used.
 
-Here are the camera settings and test photo:
+Here are the current camera settings and test photo:
 {metadata}
 
-Give a short and clear exposure assessment. If changes are needed, prioritize adjusting aperture (Av), then ISO. Avoid changing shutter speed unless absolutely necessary. Keep response under 2 sentences.
+Give a short and clear exposure assessment. Recommend any changes needed to match the preferred bright, flattering style. Favor aperture (Av), then ISO. Avoid changing shutter speed unless absolutely necessary. Keep the response under 2 sentences.
 """
 
         response = openai.chat.completions.create(
