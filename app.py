@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# ✅ Reference images with bg #f5f5f5
+# ✅ Reference images with neutral backgrounds
 reference_images = [
     "https://photos.smugmug.com/Images/i-6xxqhhB/0/MNLcnzhPMr7GMVFpGdSqDM7g2HgWWGB6LCzdphBWt/X3/unknown%20%2812%29-X3.jpg",
     "https://photos.smugmug.com/Images/i-hKhXvLf/0/KP4gnRTkWxJ2NqLBkBFHvF6J2H2bRBDQSkzxgXbJ6/X3/unknown%20%2813%29-X3.jpg",
@@ -16,16 +16,12 @@ reference_images = [
 ]
 
 def remove_background(image_path):
-    """Calls remove.bg API and returns path to image with bg replaced with #f5f5f5"""
     api_key = os.getenv("REMOVEBG_API_KEY")
     with open(image_path, 'rb') as img:
         response = requests.post(
             'https://api.remove.bg/v1.0/removebg',
             files={'image_file': img},
-            data={
-                'size': 'auto',
-                'bg_color': 'f5f5f5'
-            },
+            data={'size': 'auto', 'bg_color': 'f5f5f5'},
             headers={'X-Api-Key': api_key}
         )
     if response.status_code == 200:
@@ -49,41 +45,41 @@ def analyze():
         if not image_file or not metadata:
             return jsonify({"error": "Missing image or metadata"}), 400
 
-        # Save uploaded image
+        # Save original
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
             original_path = tmp.name
             image_file.save(original_path)
 
-        # 🔧 Remove background and apply f5f5f5
+        # Remove background
         cleaned_path = remove_background(original_path)
 
         # Build GPT Vision prompt
         vision_prompt = []
 
-        # Reference images
+        # Step 1: Reference images
         for url in reference_images:
             vision_prompt.append({
                 "type": "image_url",
                 "image_url": {"url": url}
             })
 
-        # Instruction: what these images represent
+        # Step 2: Instruction block
         vision_prompt.append({
             "type": "text",
             "text": (
                 "These reference images show Jeremy’s ideal photo booth exposure style. "
                 "Focus on the subject’s skin tones, brightness, and clarity. "
-                "Ignore any background color, texture, or material — including sequins or dark backdrops."
+                "Ignore the backdrop, sequins, or material."
             )
         })
 
-        # Test photo with background removed
+        # Step 3: User test image
         vision_prompt.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image(cleaned_path)}"}
         })
 
-        # Final instruction
+        # Step 4: Final prompt
         vision_prompt.append({
             "type": "text",
             "text": (
@@ -96,13 +92,13 @@ def analyze():
                 "Use this as the baseline when making suggestions.\n\n"
 
                 "Start your answer with one of these emojis:\n"
-                "✅ = exposure matches Jeremy’s reference style\n"
-                "🌙 = slightly underexposed\n"
-                "☀️ = slightly overexposed\n"
-                "⚠️ = far off\n\n"
+                "✅ = exposure is very close to Jeremy’s style — bright and vibrant skin tones\n"
+                "🌙 = slightly underexposed — not bad, but needs brightening\n"
+                "☀️ = slightly overexposed — still usable\n"
+                "⚠️ = far off — fix exposure immediately\n\n"
 
-                "Focus only on the subject’s exposure. Ignore the backdrop completely. "
-                "Suggest changes if they improve the subject's exposure compared to the reference examples.\n\n"
+                "Compare only the subject’s exposure to the reference examples. "
+                "If skin tones are darker, duller, or less vibrant than the references, recommend brightening — even if it’s subtle.\n\n"
 
                 "✅ Suggest small, clear adjustments. "
                 "Never recommend ISO above 800. Do not adjust Av or ISO more than 1 stop unless absolutely necessary. "
@@ -113,7 +109,7 @@ def analyze():
             )
         })
 
-        # Send to GPT-4 Vision
+        # GPT-4 Vision call
         response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[{"role": "user", "content": vision_prompt}],
