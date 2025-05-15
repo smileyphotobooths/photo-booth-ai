@@ -89,7 +89,7 @@ def analyze():
             "text": (
                 f"Current camera settings: {metadata}\n\n"
                 "Jeremy prefers images that are bright, clean, and vibrant — even if they are slightly overexposed. "
-                "If the test image appears darker than the reference examples, recommend brightening unless the subject’s skin tones are already vivid and well-lit. "
+                "If the test image appears darker than the reference examples, recommend brightening. "
                 "Be stricter about underexposure than overexposure.\n\n"
 
                 "Jeremy's usual settings are: ISO 800, f/7.1, 1/125s. Most photos fall within 1 stop of these values. "
@@ -102,7 +102,7 @@ def analyze():
                 "⚠️ = far off\n\n"
 
                 "Focus only on the subject’s exposure. Ignore the backdrop completely. "
-                "Only suggest changes if they clearly improve the photo compared to the reference examples.\n\n"
+                "Suggest changes if they improve the photo compared to the reference examples.\n\n"
 
                 "✅ Suggest small, clear adjustments. "
                 "Never recommend ISO above 800. Do not adjust Av or ISO more than 1 stop unless absolutely necessary. "
