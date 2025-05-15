@@ -83,31 +83,35 @@ def analyze():
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image(cleaned_path)}"}
         })
 
-        # Final instruction
-        vision_prompt.append({
-            "type": "text",
-            "text": (
-                f"Current camera settings: {metadata}\n\n"
-                "Jeremy's usual settings are: ISO 800, f/7.1, 1/125s. Most photos fall within 1 stop of these values. "
-                "Use this as the baseline when making suggestions.\n\n"
+# Final instruction
+vision_prompt.append({
+    "type": "text",
+    "text": (
+        f"Current camera settings: {metadata}\n\n"
+        "Jeremy prefers images that are bright, clean, and vibrant — even if they are slightly overexposed. "
+        "If the test image appears darker than the reference examples, recommend brightening unless the subject’s skin tones are already vivid and well-lit. "
+        "Be stricter about underexposure than overexposure.\n\n"
 
-                "Start with one of these emojis:\n"
-                "✅ = matches reference style\n"
-                "🌙 = slightly underexposed\n"
-                "☀️ = slightly overexposed\n"
-                "⚠️ = far off\n\n"
+        "Jeremy's usual settings are: ISO 800, f/7.1, 1/125s. Most photos fall within 1 stop of these values. "
+        "Use this as the baseline when making suggestions.\n\n"
 
-                "Focus only on the subject’s lighting and exposure. Ignore the backdrop completely. "
-                "Only suggest changes if they clearly improve the image based on the reference examples.\n\n"
+        "Start your answer with one of these emojis:\n"
+        "✅ = exposure matches Jeremy’s reference style\n"
+        "🌙 = slightly underexposed\n"
+        "☀️ = slightly overexposed\n"
+        "⚠️ = far off\n\n"
 
-                "✅ Suggest small, specific improvements. "
-                "Do not suggest ISO above 800. Do not change aperture or ISO by more than 1 stop unless the photo is far off. "
-                "Keep shutter speed fixed at 1/125 unless absolutely necessary.\n\n"
+        "Focus only on the subject’s exposure. Ignore the backdrop completely. "
+        "Only suggest changes if they clearly improve the photo compared to the reference examples.\n\n"
 
-                "Stay consistent with past responses. If the current image looks similar to one you approved, say so. "
-                "Keep your answer brief — no more than 2 sentences."
-            )
-        })
+        "✅ Suggest small, clear adjustments. "
+        "Never recommend ISO above 800. Do not adjust Av or ISO more than 1 stop unless absolutely necessary. "
+        "Keep shutter speed fixed at 1/125 unless the image is unusably exposed.\n\n"
+
+        "Stay consistent with past responses. If this looks similar to something you already approved, say so. "
+        "Keep your answer short — no more than 2 sentences."
+    )
+})
 
         # Send to GPT-4 Vision
         response = openai.chat.completions.create(
