@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# ✅ Reference images with neutral backgrounds
+# ✅ Reference images with bg #f5f5f5
 reference_images = [
     "https://photos.smugmug.com/Images/i-6xxqhhB/0/MNLcnzhPMr7GMVFpGdSqDM7g2HgWWGB6LCzdphBWt/X3/unknown%20%2812%29-X3.jpg",
     "https://photos.smugmug.com/Images/i-hKhXvLf/0/KP4gnRTkWxJ2NqLBkBFHvF6J2H2bRBDQSkzxgXbJ6/X3/unknown%20%2813%29-X3.jpg",
@@ -16,6 +16,7 @@ reference_images = [
 ]
 
 def remove_background(image_path):
+    """Calls remove.bg API and returns path to image with bg replaced with #f5f5f5"""
     api_key = os.getenv("REMOVEBG_API_KEY")
     with open(image_path, 'rb') as img:
         response = requests.post(
@@ -40,76 +41,73 @@ def analyze():
     try:
         image_file = request.files.get('file')
         metadata = request.form.get('metadata')
-        previous = request.form.get('previous_settings')
 
         if not image_file or not metadata:
             return jsonify({"error": "Missing image or metadata"}), 400
 
-        # Save original
+        # Save uploaded image
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
             original_path = tmp.name
             image_file.save(original_path)
 
-        # Remove background
+        # 🔧 Remove background and apply f5f5f5
         cleaned_path = remove_background(original_path)
 
         # Build GPT Vision prompt
         vision_prompt = []
 
-        # Step 1: Reference images
+        # Reference images
         for url in reference_images:
             vision_prompt.append({
                 "type": "image_url",
                 "image_url": {"url": url}
             })
 
-        # Step 2: Instruction block
         vision_prompt.append({
             "type": "text",
             "text": (
                 "These reference images show Jeremy’s ideal photo booth exposure style. "
-                "Focus on the subject’s skin tones, brightness, and clarity. "
-                "Ignore the backdrop, sequins, or material."
+                "Focus only on the subject’s skin tones and brightness — not on the background."
             )
         })
 
-        # Step 3: User test image
+        # Test photo with background removed
         vision_prompt.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image(cleaned_path)}"}
         })
 
-        # Step 4: Final prompt
+        # Final instruction
         vision_prompt.append({
             "type": "text",
             "text": (
                 f"Current camera settings: {metadata}\n\n"
-                "Jeremy prefers images that are bright, clean, and vibrant — even if they are slightly overexposed. "
-                "If the test image appears even slightly darker than the reference examples, recommend brightening. "
-                "Be stricter about underexposure than overexposure.\n\n"
+                "Jeremy prefers images that are bright, clean, and vibrant — even at the risk of slight overexposure. "
+                "If the test image appears even *slightly* darker or duller than the reference examples, suggest brightening. "
+                "Be stricter about underexposure than overexposure. A slightly overexposed image is preferred over one that's dim.\n\n"
 
                 "Jeremy's usual settings are: ISO 800, f/7.1, 1/125s. Most photos fall within 1 stop of these values. "
                 "Use this as the baseline when making suggestions.\n\n"
 
                 "Start your answer with one of these emojis:\n"
-                "✅ = exposure is very close to Jeremy’s style — bright and vibrant skin tones\n"
-                "🌙 = slightly underexposed — not bad, but needs brightening\n"
-                "☀️ = slightly overexposed — still usable\n"
-                "⚠️ = far off — fix exposure immediately\n\n"
+                "✅ = exposure matches Jeremy’s reference style\n"
+                "🌙 = slightly underexposed (recommend correction)\n"
+                "☀️ = slightly overexposed\n"
+                "⚠️ = far off\n\n"
 
-                "Compare only the subject’s exposure to the reference examples. "
-                "If skin tones are darker, duller, or less vibrant than the references, recommend brightening — even if it’s subtle.\n\n"
+                "Focus only on the subject’s exposure. Ignore the backdrop completely. "
+                "Suggest changes only if they clearly improve the subject's exposure compared to the reference examples.\n\n"
 
                 "✅ Suggest small, clear adjustments. "
-                "Never recommend ISO above 800. Do not adjust Av or ISO more than 1 stop unless absolutely necessary. "
+                "Never recommend ISO above 800. Avoid changing Av or ISO more than 1 stop unless absolutely necessary. "
                 "Keep shutter speed fixed at 1/125 unless the image is unusably exposed.\n\n"
 
                 "Stay consistent with past responses. If this looks similar to something you already approved, say so. "
-                "Keep your answer short — no more than 2 sentences."
+                "Keep your answer short — ideally under 2 sentences. When in doubt between too dark or too bright, err on the side of brighter."
             )
         })
 
-        # GPT-4 Vision call
+        # Send to GPT-4 Vision
         response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[{"role": "user", "content": vision_prompt}],
