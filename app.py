@@ -95,14 +95,14 @@ def analyze():
                 "☀️ = slightly overexposed\n"
                 "⚠️ = far off\n\n"
 
-                "Focus only on the subject’s exposure. Ignore the backdrop completely. "
-                "Suggest changes only if they clearly improve the subject's exposure compared to the reference examples.\n\n"
+                "Focus only on the subject’s exposure. Ignore the backdrop completely.\n\n"
 
-                "✅ Suggest small, clear adjustments. "
-                "Never recommend ISO above 800. Avoid changing Av or ISO more than 1 stop unless absolutely necessary. "
-                "Keep shutter speed fixed at 1/125 unless the image is unusably exposed.\n\n"
-
-                "Keep your answer short — ideally under 2 sentences. When in doubt between too dark or too bright, always err on the side of brighter."
+                "✅ When suggesting changes:\n"
+                "- Limit to 1 stop change (e.g. Av 7.1 → 5.6) unless exposure is ⚠️ far off\n"
+                "- Never suggest ISO above 800\n"
+                "- Never suggest shutter speed changes\n"
+                "- Keep your entire response to 1 sentence.\n"
+                "- Format: '[Emoji] Short recommendation with specific setting.'"
             )
         })
 
