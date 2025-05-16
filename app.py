@@ -98,8 +98,9 @@ def analyze():
                 "Focus only on the subject’s exposure. Ignore the backdrop completely.\n\n"
 
                 "✅ When suggesting changes:\n"
-                "- Limit to 1 stop change (e.g. Av 7.1 → 5.6) unless exposure is ⚠️ far off\n"
-                "- Never suggest ISO above 800\n"
+                "- You may only adjust aperture or ISO by 1 stop unless the image is ⚠️ far off.\n"
+                "- Example: If aperture is f/8, the maximum suggestion is f/7.1 unless exposure is severely off.\n"
+                "- Never recommend ISO above 800\n"
                 "- Never suggest shutter speed changes\n"
                 "- Keep your entire response to 1 sentence.\n"
                 "- Format: '[Emoji] Short recommendation with specific setting.'"
